@@ -13,11 +13,13 @@ def scan_videos(folder_path):
     for file_path in folder_path.iterdir():
         if file_path.is_file() and file_path.suffix.lower() in VIDEO_EXTENSIONS:
             modified_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+
             records.append(
                 {
                     "filename": file_path.name,
                     "full_path": str(file_path.resolve()),
                     "modified_time": modified_time,
+                    "file_size_bytes": file_path.stat().st_size,
                 }
             )
 
@@ -27,7 +29,12 @@ def scan_videos(folder_path):
 
 def write_csv(records, output_path):
     """Write video records to a CSV file."""
-    fieldnames = ["filename", "full_path", "modified_time"]
+    fieldnames = [
+        "filename",
+        "full_path",
+        "modified_time",
+        "file_size_bytes",
+    ]
 
     with output_path.open("w", newline="", encoding="utf-8-sig") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -41,6 +48,7 @@ def write_csv(records, output_path):
                     "modified_time": record["modified_time"].strftime(
                         "%Y-%m-%d %H:%M:%S"
                     ),
+                    "file_size_bytes": record["file_size_bytes"],
                 }
             )
 
