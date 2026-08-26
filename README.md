@@ -2,13 +2,16 @@
 
 一个用于整理 AI 视频素材的视频管理工具。
 
-当前版本：V0.2
+当前版本：V0.3
 
 ## Features
 
 - 扫描指定文件夹中的视频文件
 - 提取视频基础信息
 - 提取视频时长 metadata
+- 提取视频分辨率
+- 提取视频帧率 FPS
+- 提取视频编码格式
 - 生成 CSV 素材索引文件
 
 支持格式：
@@ -38,6 +41,10 @@ materials.csv
 | modified_time | 修改时间 |
 | file_size_bytes | 文件大小（bytes） |
 | duration | 视频时长（seconds） |
+| width | 视频宽度（pixels） |
+| height | 视频高度（pixels） |
+| fps | 视频帧率 |
+| codec | 视频编码格式 |
 
 ---
 
@@ -86,7 +93,9 @@ materials.csv
 - [x] 视频扫描
 - [x] CSV 索引生成
 - [x] 视频时长提取
-- [ ] 视频分辨率信息
+- [x] 视频分辨率信息
+- [x] 视频帧率信息
+- [x] 视频编码格式
 - [ ] 视频缩略图生成
 - [ ] AI 语义标签
 - [ ] 智能素材搜索
@@ -94,6 +103,13 @@ materials.csv
 ---
 
 ## Version
+
+### V0.3
+
+- 增加视频分辨率信息提取
+- 增加视频帧率 FPS 提取
+- 增加视频编码格式提取
+- 将完整视频 metadata 写入 CSV
 
 ### V0.2
 
