@@ -1,21 +1,11 @@
 from pathlib import Path
 import csv
 from datetime import datetime
-from moviepy import VideoFileClip
+
+from video_info import get_video_info
 
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm"}
-
-
-def get_video_duration(video_path):
-    """Get video duration in seconds."""
-    clip = VideoFileClip(str(video_path))
-
-    duration = clip.duration
-
-    clip.close()
-
-    return duration
 
 
 def scan_videos(folder_path):
@@ -29,8 +19,7 @@ def scan_videos(folder_path):
                 file_path.stat().st_mtime
             )
 
-            # 新增：读取视频时长
-            duration = get_video_duration(file_path)
+            video_info = get_video_info(file_path)
 
             records.append(
                 {
@@ -38,7 +27,10 @@ def scan_videos(folder_path):
                     "full_path": str(file_path.resolve()),
                     "modified_time": modified_time,
                     "file_size_bytes": file_path.stat().st_size,
-                    "duration": duration,
+                    "duration": video_info["duration"],
+                    "width": video_info["width"],
+                    "height": video_info["height"],
+                    "fps": video_info["fps"],
                 }
             )
 
@@ -58,6 +50,9 @@ def write_csv(records, output_path):
         "modified_time",
         "file_size_bytes",
         "duration",
+        "width",
+        "height",
+        "fps",
     ]
 
     with output_path.open(
@@ -88,6 +83,12 @@ def write_csv(records, output_path):
                     "file_size_bytes": record["file_size_bytes"],
 
                     "duration": record["duration"],
+
+                    "width": record["width"],
+
+                    "height": record["height"],
+
+                    "fps": record["fps"],
                 }
             )
 
