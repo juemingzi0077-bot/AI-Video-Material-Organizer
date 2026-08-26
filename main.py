@@ -31,6 +31,7 @@ def scan_videos(folder_path):
                     "width": video_info["width"],
                     "height": video_info["height"],
                     "fps": video_info["fps"],
+                    "codec": video_info["codec"],
                 }
             )
 
@@ -53,6 +54,7 @@ def write_csv(records, output_path):
         "width",
         "height",
         "fps",
+        "codec",
     ]
 
     with output_path.open(
@@ -89,6 +91,8 @@ def write_csv(records, output_path):
                     "height": record["height"],
 
                     "fps": record["fps"],
+
+                    "codec": record["codec"],
                 }
             )
 

@@ -20,6 +20,7 @@ def get_video_info(video_path):
         "width": clip.size[0],
         "height": clip.size[1],
         "fps": clip.fps,
+        "codec": clip.reader.infos["video_codec_name"],
     }
 
     clip.close()
