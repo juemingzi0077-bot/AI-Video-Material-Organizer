@@ -13,6 +13,7 @@
 - 提取视频帧率 FPS
 - 提取视频编码格式
 - 生成 CSV 素材索引文件
+- 实验性功能：根据一个参考视频画面查找本地相似镜头
 
 支持格式：
 
@@ -77,7 +78,7 @@ python main.py
 例如：
 
 ```text
-C:\Users\NI\Desktop\AI视频
+C:\Videos
 ```
 
 程序会生成：
@@ -85,6 +86,46 @@ C:\Users\NI\Desktop\AI视频
 ```text
 materials.csv
 ```
+
+---
+
+## Experimental Semantic Search
+
+`semantic_search.py` 会从 `materials.csv` 中的每个视频抽取 25%、50%、75%
+三个代表画面，再用 OpenCLIP 比较画面特征，返回与参考视频画面最相似的镜头。
+
+安装实验功能依赖：
+
+```bash
+pip install -r requirements-semantic-search.txt
+```
+
+第一次运行会下载 OpenCLIP 模型权重。
+
+示例：
+
+```powershell
+python semantic_search.py `
+  --materials-csv "C:\Videos\materials.csv" `
+  --reference-filename "reference.mp4" `
+  --output-dir "semantic_search_output"
+```
+
+程序会生成：
+
+```text
+semantic_search_output/
+├── frames/
+├── semantic_search_results.csv
+└── semantic_search_preview.jpg
+```
+
+当前限制：
+
+- 只检索 `materials.csv` 已记录的本地视频
+- 当前是视觉相似度实验，不等同于精确人脸识别
+- 每个视频目前固定抽取三个代表画面
+- 尚未连接 Pexels、Pixabay 等在线素材网站
 
 ---
 
@@ -100,6 +141,8 @@ materials.csv
 - [ ] AI 语义标签
 - [ ] 智能素材搜索
 
+智能素材搜索目前已完成本地视觉相似度实验验证，尚未作为正式版本功能完成。
+
 ---
 
 ## Version
@@ -110,6 +153,7 @@ materials.csv
 - 增加视频帧率 FPS 提取
 - 增加视频编码格式提取
 - 将完整视频 metadata 写入 CSV
+- 增加独立的本地相似镜头检索实验脚本
 
 ### V0.2
 
