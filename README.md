@@ -2,7 +2,7 @@
 
 一个用于整理 AI 视频素材的视频管理工具。
 
-当前版本：V0.3
+当前版本：V0.4 Alpha
 
 ## Features
 
@@ -13,7 +13,10 @@
 - 提取视频帧率 FPS
 - 提取视频编码格式
 - 生成 CSV 素材索引文件
-- 实验性功能：根据一个参考视频画面查找本地相似镜头
+- 根据一个参考视频画面查找本地相似镜头
+- 使用自然语言描述搜索本地视频镜头
+- 缓存视频帧和 AI 图像特征，加速后续查询
+- 生成搜索结果 CSV 和可视化预览图
 
 支持格式：
 
@@ -89,10 +92,15 @@ materials.csv
 
 ---
 
-## Experimental Semantic Search
+## Local Semantic Search (V0.4 Alpha)
 
 `semantic_search.py` 会从 `materials.csv` 中的每个视频抽取 25%、50%、75%
-三个代表画面，再用 OpenCLIP 比较画面特征，返回与参考视频画面最相似的镜头。
+三个代表画面，再用 OpenCLIP 建立本地语义索引。
+
+当前支持两种搜索方式：
+
+- 参考视频搜索：使用一个视频的代表画面查找相似镜头
+- 文字搜索：使用自然语言描述查找匹配的本地镜头
 
 安装实验功能依赖：
 
@@ -102,7 +110,18 @@ pip install -r requirements-semantic-search.txt
 
 第一次运行会下载 OpenCLIP 模型权重。
 
-示例：
+### 文字搜索
+
+推荐优先使用英文描述：
+
+```powershell
+python semantic_search.py `
+  --materials-csv "C:\Videos\materials.csv" `
+  --query "lonely man waiting at a bus stop at night" `
+  --output-dir "semantic_search_output\text_query"
+```
+
+### 参考视频搜索
 
 ```powershell
 python semantic_search.py `
@@ -115,16 +134,33 @@ python semantic_search.py `
 
 ```text
 semantic_search_output/
-├── frames/
-├── semantic_search_results.csv
-└── semantic_search_preview.jpg
+├── index/
+│   ├── frames/
+│   ├── frame_features.pt
+│   └── frame_index.json
+└── text_query/
+    ├── semantic_search_results.csv
+    └── semantic_search_preview.jpg
 ```
+
+首次运行会建立视频帧和 AI 特征缓存。后续查询会复用缓存；当
+`materials.csv` 或源视频发生变化时，缓存会自动失效并重建。
+
+需要手动强制重建时，可增加：
+
+```powershell
+--rebuild-index
+```
+
+本项目曾使用 15 个视频、45 个代表帧进行 CPU 验证：首次完整查询约
+30 秒，读取缓存后的文字查询约 7 秒。实际速度会因硬件和素材数量而变化。
 
 当前限制：
 
 - 只检索 `materials.csv` 已记录的本地视频
 - 当前是视觉相似度实验，不等同于精确人脸识别
 - 每个视频目前固定抽取三个代表画面
+- 当前 OpenCLIP 模型更适合英文查询，中文查询质量尚未系统验证
 - 尚未连接 Pexels、Pixabay 等在线素材网站
 
 ---
@@ -139,13 +175,25 @@ semantic_search_output/
 - [x] 视频编码格式
 - [ ] 视频缩略图生成
 - [ ] AI 语义标签
-- [ ] 智能素材搜索
+- [x] 本地参考视频相似搜索（Alpha）
+- [x] 本地文字语义搜索（Alpha）
+- [x] 视频帧与 AI 特征缓存
+- [ ] 图形化素材搜索界面
 
-智能素材搜索目前已完成本地视觉相似度实验验证，尚未作为正式版本功能完成。
+智能素材搜索目前已完成本地命令行 Alpha 验证，尚未作为正式产品功能完成。
 
 ---
 
 ## Version
+
+### V0.4 Alpha
+
+- 增加自然语言到本地视频镜头的语义搜索
+- 保留参考视频画面的相似镜头搜索模式
+- 增加视频帧与 OpenCLIP 图像特征缓存
+- 素材索引或源视频变化时自动重建缓存
+- 增加文字查询预览图和搜索结果 CSV
+- 在 CPU 环境完成文字搜索与缓存性能验证
 
 ### V0.3
 
