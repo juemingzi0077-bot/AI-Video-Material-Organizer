@@ -5,6 +5,7 @@ import csv
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import textwrap
@@ -77,6 +78,11 @@ def parse_args() -> argparse.Namespace:
         "--ffmpeg",
         type=Path,
         help="Optional explicit path to the FFmpeg executable.",
+    )
+    parser.add_argument(
+        "--skip-black-frames",
+        action="store_true",
+        help="Skip near-black cached frames for text queries only.",
     )
     return parser.parse_args()
 
@@ -535,8 +541,53 @@ def write_preview(
     return output_path
 
 
+def filter_black_frames(
+    frame_records: list[dict[str, object]],
+    features: torch.Tensor,
+    ffmpeg_path: Path,
+) -> tuple[list[dict[str, object]], torch.Tensor]:
+    keep = []
+
+    for i, record in enumerate(frame_records):
+        result = subprocess.run(
+            [
+                str(ffmpeg_path),
+                "-hide_banner", "-nostdin", "-nostats",
+                "-loglevel", "info",
+                "-i", str(record["frame_path"]),
+                "-vf", "blackframe=amount=0:threshold=8",
+                "-frames:v", "1",
+                "-f", "null", "-",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+            timeout=30,
+        )
+        match = re.search(r"\bpblack:(\d+)\b", result.stderr)
+        if match is None:
+            raise RuntimeError(
+                f"Black-frame detection failed: {record['frame_path']}"
+            )
+        if int(match.group(1)) < 98:
+            keep.append(i)
+
+    if not keep:
+        raise ValueError("No frames remain after black-frame filtering.")
+
+    print(
+        f"black_frames_skipped={len(frame_records) - len(keep)}, "
+        f"retained={len(keep)}"
+    )
+    return [frame_records[i] for i in keep], features[keep]
+
+
 def main() -> None:
     args = parse_args()
+    if args.skip_black_frames and args.query is None:
+        raise ValueError("--skip-black-frames requires --query.")
     if args.top_k < 1:
         raise ValueError("--top-k must be at least 1.")
     if args.batch_size < 1:
@@ -578,6 +629,10 @@ def main() -> None:
         index_state = "loaded"
 
     if args.query is not None:
+        if args.skip_black_frames:
+            frame_records, features = filter_black_frames(
+                frame_records, features, resolve_ffmpeg(args.ffmpeg)
+            )
         if model is None:
             model, _ = load_model(device)
         query_feature = encode_text_query(model, args.query, device)

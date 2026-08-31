@@ -121,6 +121,33 @@ python semantic_search.py `
   --output-dir "semantic_search_output\text_query"
 ```
 
+### 可选：过滤近黑帧（仅文字搜索）
+
+`--skip-black-frames` 默认关闭，只有显式添加时才启用；不能与
+`--reference-filename` 一起使用。
+
+在项目目录中运行：
+
+```powershell
+.\.venv\Scripts\python.exe -B .\semantic_search.py --materials-csv "C:\Videos\materials.csv" --query "heavy rain falling at night, visible raindrops" --skip-black-frames --output-dir ".\semantic_search_output\black_filter_on"
+```
+
+过滤复用现有 FFmpeg 的 `blackframe`：像素亮度阈值设为 `8`，
+报告的黑像素占比达到 `98%` 时，将该帧排除出本次查询候选。
+帧记录和图像特征同步筛选，仅在内存中过滤；不修改原视频、不删除缓存帧，
+也不将过滤后的索引写回磁盘。缓存失效时仍按原有规则重建完整索引。
+
+2026-08-31 在 CPU、现有本地模型缓存及 `HF_HUB_OFFLINE=1` 条件下，
+使用上述雨景查询对 15 个视频、45 帧进行开关对照：关闭时保留 45 帧；
+开启时输出 `black_frames_skipped=4, retained=41`。两次均为 `index=loaded`。
+`001_雨桥剑客_AI视频练习作品.mp4` 从第 3 名升至第 1 名，
+相似度仍为 `0.216153`。这验证了当前样本中无效黑帧干扰的减少。
+
+限制：这是当前数据、单条查询的验证，不保证识别所有黑底字幕，
+也不保证不会误排有效暗画面；它不是雨景检测器，不能保证匹配完整场景条件。
+开启后每次查询都需逐帧运行 FFmpeg，额外耗时尚未测量。
+下文历史性能数据未启用此开关。
+
 ### 参考视频搜索
 
 ```powershell
