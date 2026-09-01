@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 semantic_search_output/
+integrations/pexels_mcp/node_modules/

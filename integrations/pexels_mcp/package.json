@@ -1,0 +1,10 @@
+{
+  "name": "project001-pexels-mcp-adapter",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@hanoak/pexels-mcp-server": "1.0.2",
+    "@modelcontextprotocol/sdk": "1.30.0"
+  }
+}
