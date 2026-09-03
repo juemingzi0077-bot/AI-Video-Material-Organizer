@@ -17,6 +17,8 @@
 - 使用自然语言描述搜索本地视频镜头
 - 缓存视频帧和 AI 图像特征，加速后续查询
 - 生成搜索结果 CSV 和可视化预览图
+- 通过 Pexels MCP 搜索在线视频元信息
+- 按已选 Pexels 视频 ID 下载并截取单镜头（实验入口）
 
 支持格式：
 
@@ -195,7 +197,72 @@ semantic_search_output/
 - 当前是视觉相似度实验，不等同于精确人脸识别
 - 每个视频目前固定抽取三个代表画面
 - 当前 OpenCLIP 模型更适合英文查询，中文查询质量尚未系统验证
-- 尚未连接 Pexels、Pixabay 等在线素材网站
+- 本节本地搜索不检索线上素材；独立 Pexels 元信息搜索和单镜头入口见下节
+
+---
+
+
+## Pexels 在线搜索与指定素材剪辑（实验入口）
+
+在线元信息搜索复用 `@hanoak/pexels-mcp-server` 1.0.2 和 MCP SDK 1.30.0。
+现有 `integrations/pexels_mcp/search_videos.mjs` 仍只搜索，不下载：
+
+```powershell
+node .\integrations\pexels_mcp\search_videos.mjs --help
+```
+
+新的独立入口接收一个**已由使用者确认**的 Pexels 视频 ID，获取链接后用系统
+curl 下载，再用项目已有 FFmpeg 截取。它不判断素材是否符合自然语言需求，
+也不分析参考视频模板或拼接多个镜头。
+
+### Windows 手动运行
+
+在项目根目录运行。以下文件夹必须尚不存在；命令仅为示例，不会自动执行：
+
+```powershell
+& .\integrations\pexels_mcp\clip_video.ps1 -VideoId 7253197 -StartSeconds 2 -DurationSeconds 5 -OutputDir "C:\Users\NI\Downloads\Project001_single_clip_v01"
+```
+
+四项参数必填；帮助无需 Key、无需联网：
+
+```powershell
+& .\integrations\pexels_mcp\clip_video.ps1 -Help
+```
+
+依赖沿用现有 Node、MCP 安装、Windows curl.exe 和项目 `.venv` 中的
+imageio-ffmpeg，缺失时停止，不自动安装。Key 只在本机提示处隐藏输入，
+不作为命令参数、不保存到文件；正常或异常退出时清理本次设置的环境变量。
+若启动时已有 `PEXELS_API_KEY` 环境变量，入口会拒绝接管，请勿打印或粘贴它。
+清理环境变量不等于保证进程内存中的所有字符串都已擦除。
+
+### 格式、输出和失败边界
+
+- 只接受该 ID 返回的 HTTPS Pexels 视频链接；不接受任意 URL，不跟随重定向。
+- 选择不低于 1080×1920、9:16 的最小 MP4 版本；没有合适版本即停止。
+- 起点向下、时长向上对齐到 25 fps 整帧，调整量各小于一帧；对齐后的区间不得超过下载素材的实际时长。
+- 固定输出：1080×1920、25 fps、H.264、yuv420p、无声。
+- 每次只处理一条素材；下载上限 100 MiB，连接 15 秒、下载 180 秒；
+  MCP 60 秒、元信息读取 30 秒、编码和完整解码各 180 秒超时。不自动重试。
+- 输出目录须为绝对路径，父目录已存在且目录本身全新；失败返回非零状态，保留半成品，不覆盖或删除已有文件。
+- 输出位于用户指定的仓库外目录，不改本地视频索引、缓存或原始素材。
+
+成功后保存 `source.mp4`、`clip.mp4` 和 `source_metadata.json`。
+来源记录包含视频 ID、作者/来源、获取时间、清晰度、请求及实际剪辑参数、
+验收结果，不包含 Key。保留来源记录不代表已判断全部使用权利。
+
+### 离线测试与验证状态
+
+```powershell
+node --test .\integrations\pexels_mcp\clip_video.test.mjs
+```
+
+离线测试默认把产物放系统临时目录，不需要真实 Key 或真实 API；覆盖参数、文件保护、
+元信息/链接选择、失败路径、格式及凭证处理边界。
+
+2026-09-03 的项目外原型已由使用者验证真实 MCP 获取链接、下载、
+五秒截取与播放。这是原型的证据，**不能代替本入口的本机真实 API 验收**。
+安装此入口后，仍需使用者运行一次并确认成片；离线测试通过也不证明
+Pexels 服务实时可用、任意素材合适或完整自动剪辑已经实现。
 
 ---
 
